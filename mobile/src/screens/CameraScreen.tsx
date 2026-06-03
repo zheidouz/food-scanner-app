@@ -133,7 +133,7 @@ export function CameraScreen({ navigation }: any) {
             style={styles.camera}
             facing="back"
             barcodeScannerSettings={{
-              barcodeTypes: ['ean-13', 'ean-8', 'upc-a', 'upc-e', 'code-128', 'code-39'],
+              barcodeTypes: ['ean13', 'ean8', 'upc_a', 'upc_e', 'code128', 'code39'],
             }}
             onBarcodeScanned={handleBarcodeScanned}
           >

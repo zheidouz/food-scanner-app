@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, SafeAreaView } from 'react-native';
+import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { theme } from '../theme';
 import { HealthScoreGauge } from '../components/HealthScoreGauge';
 import { NutriScoreBadge } from '../components/NutriScoreBadge';
@@ -8,16 +9,16 @@ import { GoodBadCard } from '../components/GoodBadCard';
 import { ErrorState } from '../components/ErrorState';
 import type { FoodProduct, FoodAnalysis } from '../../../shared/types';
 
-interface Props {
-  route: {
-    params: {
-      product: FoodProduct;
-      analysis: FoodAnalysis;
-      error?: string;
-    };
+type RootStackParamList = {
+  Home: undefined;
+  Result: {
+    product: FoodProduct;
+    analysis: FoodAnalysis;
+    error?: string;
   };
-  navigation: any;
-}
+};
+
+type Props = NativeStackScreenProps<RootStackParamList, 'Result'>;
 
 export function ResultScreen({ route, navigation }: Props) {
   const { product, analysis, error } = route.params;

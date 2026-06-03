@@ -93,7 +93,9 @@ export async function analyzeWithDeepSeek(
     const validation = aiResponseSchema.safeParse(parsed);
 
     if (!validation.success) {
-      console.error('DeepSeek response validation failed:', validation.error.format());
+      console.error('=== DeepSeek validation failed ===');
+      console.error('Raw JSON received:', jsonStr.slice(0, 2000));
+      console.error('Validation errors:', JSON.stringify(validation.error.format(), null, 2));
       return {
         analysis: null,
         error: {

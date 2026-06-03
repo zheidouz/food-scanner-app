@@ -3,7 +3,7 @@ import { handleScan } from '../services/scanService';
 
 export const scanRouter = Router();
 
-// POST /api/scan — Scan a product by barcode
+// POST /api/scan — Scan a product by barcode (preferred)
 scanRouter.post('/', async (req, res) => {
   const { barcode } = req.body;
 
@@ -27,7 +27,18 @@ scanRouter.post('/', async (req, res) => {
   return res.json(result);
 });
 
-// GET /api/scan/:barcode — Scan a product by barcode (GET version)
+// GET /api/scan — Returns JSON error (catches /api/scan/ with no barcode)
+scanRouter.get('/', (_req, res) => {
+  return res.status(400).json({
+    success: false,
+    error: {
+      code: 'BARCODE_NOT_FOUND',
+      message: 'A valid barcode is required. Use GET /api/scan/:barcode',
+    },
+  });
+});
+
+// GET /api/scan/:barcode — Scan a product by barcode (convenience)
 scanRouter.get('/:barcode', async (req, res) => {
   const { barcode } = req.params;
 

@@ -15,13 +15,19 @@ const badPointSchema = z.object({
   category: z.enum(['additive', 'nutrient-flag', 'processing', 'allergen']),
   label: z.string().min(1).max(100),
   description: z.string().min(1).max(300),
-  severity: z.enum(['low', 'medium', 'high']),
+  severity: z.preprocess(
+    (val) => (val === 'moderate' ? 'medium' : val),
+    z.enum(['low', 'medium', 'high'])
+  ),
 });
 
 const additiveInfoSchema = z.object({
   name: z.string().min(1).max(100),
-  eNumber: z.string().regex(/^E\d{3,4}$/).optional(),
-  risk: z.enum(['low', 'medium', 'high']),
+  eNumber: z.string().regex(/^E\d{3,4}[a-z]?$/i).optional(),
+  risk: z.preprocess(
+    (val) => (val === 'moderate' ? 'medium' : val),
+    z.enum(['low', 'medium', 'high'])
+  ),
   description: z.string().min(1).max(300),
 });
 

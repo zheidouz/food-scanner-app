@@ -9,9 +9,19 @@ import { ResultScreen } from './src/screens/ResultScreen';
 import { HistoryScreen } from './src/screens/HistoryScreen';
 import { ProfileScreen } from './src/screens/ProfileScreen';
 import { theme } from './src/theme/index';
+import type { FoodProduct, FoodAnalysis } from '../shared/types';
+
+type RootStackParamList = {
+  Home: undefined;
+  Result: {
+    product: FoodProduct;
+    analysis: FoodAnalysis;
+    error?: string;
+  };
+};
 
 const Tab = createBottomTabNavigator();
-const Stack = createNativeStackNavigator();
+const Stack = createNativeStackNavigator<RootStackParamList>();
 
 function TabIcon({ name, color }: { name: string; color: string }) {
   const icons: Record<string, string> = {
@@ -86,24 +96,5 @@ export default function App() {
         />
       </Stack.Navigator>
     </NavigationContainer>
-  );
-}
-
-// Simple text-based tab icons (will be replaced with SVG icons later)
-function TabIcon({ name, color }: { name: string; color: string }) {
-  const icons: Record<string, string> = {
-    camera: '📷',
-    history: '📋',
-    profile: '👤',
-  };
-
-  return (
-    <React.Fragment>
-      {React.createElement(
-        require('react-native').Text,
-        { style: { fontSize: 22, color } },
-        icons[name] || '●'
-      )}
-    </React.Fragment>
   );
 }

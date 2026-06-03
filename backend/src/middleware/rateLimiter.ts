@@ -1,10 +1,10 @@
 import rateLimit from 'express-rate-limit';
 
-// Open Food Facts free tier: ~20 req/min
-// We apply a conservative 15 req/min per IP to stay safe
+// Allow 60 requests per minute per IP — comfortable for scanning
+// multiple products in a grocery store trip
 export const rateLimiter = rateLimit({
   windowMs: 60 * 1000, // 1 minute
-  max: 15,
+  max: 60,
   standardHeaders: true,
   legacyHeaders: false,
   message: {

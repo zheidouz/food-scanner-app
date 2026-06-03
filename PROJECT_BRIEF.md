@@ -87,22 +87,23 @@ A mobile app that scans food products (via camera, barcode, photo upload, or tex
 
 ## 7. ✅ Current Sprint
 
-**Sprint 2** — Photo Upload, Text Search & User Experience  
-**Status:** 🟡 In Planning — see `docs/sprint-2/plan.md`
+**Sprint 3** — Dark Mode, Demo Scan, OCR & Quality of Life  
+**Status:** 🟡 In Planning — see `docs/sprint-3/plan.md`
 
 **Focus:**
-- Photo library upload for label scanning
-- Text search fallback for product lookup
-- Custom API key management for power users
-- 3-screen onboarding flow
-- Share scan result as image
-- Dark mode support
+- Dark mode support (full theme refactor)
+- Demo scan card for first-time users
+- Tesseract.js OCR on uploaded label images
+- Alternative product suggestions
+- Multi-scan grocery mode
+- Eco-Score integration
 
 ### Past Sprints
 
 | Sprint | Focus | Status |
 |---|---|---|
-| Sprint 1 | Project scaffolding, core scanning, basic analysis | ✅ Complete — 21/21 tasks, QA PASS |
+| Sprint 1 | Scaffolding, core scanning, basic analysis | ✅ Complete |
+| Sprint 2 | Photo upload, text search, custom API keys, share | ✅ Complete |
 
 ---
 
@@ -143,3 +144,4 @@ food-scanner-app/
 | 2026-06-03 | Open Food Facts as primary food DB | Free, open-source, large dataset, barcode lookup |
 | 2026-06-03 | DeepSeek V4 Flash replaces Gemini | Better JSON compliance, cheaper, OpenAI-compatible API |
 | 2026-06-03 | Sprint 2: photo upload + text search + API keys | Highest user impact, completes core input methods |
+| 2026-06-03 | Sprint 3: dark mode, demo scan, OCR, alternatives | Deferred from Sprint 2; finishes remaining UX features |

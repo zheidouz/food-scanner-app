@@ -1,7 +1,7 @@
 import type { NovaGroup, NutriScore } from '../../../shared/types';
 import { calculateNutriScore, calculateNovaFromNutrition, calculateHealthScore, generateNutritionFlags } from '../services/scoring';
 import { lookupProductCached } from '../services/openFoodFacts';
-import { analyzeIngredients } from '../services/gemini';
+import { analyzeIngredients } from '../services/ai';
 import type { FoodAnalysis, ScanResponse } from '../../../shared/types';
 
 export async function handleScan(barcode: string): Promise<ScanResponse> {
@@ -11,31 +11,31 @@ export async function handleScan(barcode: string): Promise<ScanResponse> {
     return { success: false, error: lookupError ?? { code: 'PRODUCT_NOT_FOUND', message: 'Product not found.' } };
   }
 
-  // 2. Analyze ingredients with Gemini
-  const { analysis: geminiAnalysis, error: geminiError } = await analyzeIngredients(
+  // 2. Analyze ingredients with AI (DeepSeek V4 Flash by default)
+  const { analysis: aiAnalysis, error: aiError, provider } = await analyzeIngredients(
     product.ingredients,
     product.name
   );
 
-  // 3. Compute fallback scores if Gemini fails
-  const novaGroup: NovaGroup = geminiAnalysis?.novaGroup ?? calculateNovaFromNutrition(product.nutrition) ?? 3;
-  const nutriScore: NutriScore = geminiAnalysis?.nutriScore ?? calculateNutriScore(product.nutrition);
-  const healthScore = geminiAnalysis?.healthScore ?? calculateHealthScore(product.nutrition, novaGroup, nutriScore);
+  // 3. Compute fallback scores if AI fails
+  const novaGroup: NovaGroup = aiAnalysis?.novaGroup ?? calculateNovaFromNutrition(product.nutrition) ?? 3;
+  const nutriScore: NutriScore = aiAnalysis?.nutriScore ?? calculateNutriScore(product.nutrition);
+  const healthScore = aiAnalysis?.healthScore ?? calculateHealthScore(product.nutrition, novaGroup, nutriScore);
 
-  // 4. Combine Gemini good/bad points with nutrition-based flags
+  // 4. Combine AI good/bad points with nutrition-based flags
   const { goodPoints: nutritionGood, badPoints: nutritionBad } = generateNutritionFlags(product.nutrition);
 
   const goodPoints = [
-    ...(geminiAnalysis?.goodPoints ?? []),
+    ...(aiAnalysis?.goodPoints ?? []),
     ...nutritionGood.filter(
-      (ng) => !geminiAnalysis?.goodPoints?.some((gp) => gp.label === ng.label)
+      (ng) => !aiAnalysis?.goodPoints?.some((gp) => gp.label === ng.label)
     ),
   ];
 
   const badPoints = [
-    ...(geminiAnalysis?.badPoints ?? []),
+    ...(aiAnalysis?.badPoints ?? []),
     ...nutritionBad.filter(
-      (nb) => !geminiAnalysis?.badPoints?.some((bp) => bp.label === nb.label)
+      (nb) => !aiAnalysis?.badPoints?.some((bp) => bp.label === nb.label)
     ),
   ];
 
@@ -46,14 +46,14 @@ export async function handleScan(barcode: string): Promise<ScanResponse> {
     novaGroup,
     goodPoints,
     badPoints,
-    allergens: geminiAnalysis?.allergens ?? [],
-    additives: geminiAnalysis?.additives ?? [],
+    allergens: aiAnalysis?.allergens ?? [],
+    additives: aiAnalysis?.additives ?? [],
   };
 
   return {
     success: true,
     product,
     analysis,
-    error: geminiError ? { code: 'ANALYSIS_FAILED', message: 'AI analysis incomplete — using nutrition-based fallback.', details: geminiError.message } : undefined,
+    error: aiError ? { code: 'ANALYSIS_FAILED', message: `AI analysis (${provider}) incomplete — using nutrition-based fallback.`, details: aiError.message } : undefined,
   };
 }

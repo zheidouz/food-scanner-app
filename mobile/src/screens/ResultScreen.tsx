@@ -1,5 +1,6 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, SafeAreaView } from 'react-native';
+import React, { useRef } from 'react';
+import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, SafeAreaView, Share, Platform } from 'react-native';
+import ViewShot from 'react-native-view-shot';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { theme } from '../theme';
 import { HealthScoreGauge } from '../components/HealthScoreGauge';
@@ -33,6 +34,23 @@ interface Props {
 
 export function ResultScreen({ route, navigation }: Props) {
   const { product, analysis, error, cached } = route.params;
+  const viewShotRef = useRef<any>(null);
+
+  const handleShare = async () => {
+    if (!product || !analysis) return;
+    try {
+      if (viewShotRef.current?.capture) {
+        const uri = await viewShotRef.current.capture();
+        await Share.share({
+          title: `${product.name} — Food Scanner Analysis`,
+          message: `🍎 Check out the analysis for ${product.name}!\n\nHealth Score: ${analysis.healthScore}/100\nNutri-Score: ${analysis.nutriScore}\n\nScan your own food with Food Scanner!`,
+          url: Platform.OS === 'ios' ? uri : undefined,
+        });
+      }
+    } catch {
+      // User cancelled share — not an error
+    }
+  };
 
   if (!product || !analysis) {
     return (
@@ -54,7 +72,8 @@ export function ResultScreen({ route, navigation }: Props) {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        {/* Product Header */}
+        <ViewShot ref={viewShotRef} options={{ format: 'png', quality: 0.9 }} style={styles.shareContainer}>          
+          {/* Product Header */}
         <View style={styles.productHeader}>
           {product.imageUrl ? (
             <Image source={{ uri: product.imageUrl }} style={styles.productImage} />
@@ -179,7 +198,13 @@ export function ResultScreen({ route, navigation }: Props) {
           </View>
         )}
 
-        {/* Actions */}
+        </ViewShot>
+
+        {/* Share + Actions */}
+        <TouchableOpacity style={styles.shareButton} onPress={handleShare}>
+          <Text style={styles.shareButtonText}>📤 Share Result</Text>
+        </TouchableOpacity>
+
         <View style={styles.actions}>
           <TouchableOpacity style={styles.actionButton} onPress={() => navigation.goBack()}>
             <Text style={styles.actionButtonText}>Scan Another</Text>
@@ -400,6 +425,24 @@ const styles = StyleSheet.create({
   },
   nutritionValueHighlight: {
     color: theme.colors.error,
+  },
+  shareContainer: {
+    backgroundColor: theme.colors.background,
+  },
+  shareButton: {
+    height: 48,
+    marginHorizontal: theme.spacing.md,
+    marginBottom: theme.spacing.sm,
+    backgroundColor: theme.colors.secondary,
+    borderRadius: theme.borderRadius.md,
+    justifyContent: 'center',
+    alignItems: 'center',
+    ...theme.shadows.sm,
+  },
+  shareButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
   },
   actions: {
     paddingHorizontal: theme.spacing.md,

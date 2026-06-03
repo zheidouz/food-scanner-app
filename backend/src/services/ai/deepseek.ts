@@ -10,15 +10,17 @@ function getApiKey(): string {
 
 /**
  * Analyze ingredients using DeepSeek V4 Flash (OpenAI-compatible API)
+ * @param customApiKey — Optional per-request API key (from X-DeepSeek-Key header)
  */
 export async function analyzeWithDeepSeek(
   ingredients: string,
   productName: string,
+  customApiKey?: string,
 ): Promise<{
   analysis: ValidatedAIResponse | null;
   error: ScanError | null;
 }> {
-  const apiKey = getApiKey();
+  const apiKey = customApiKey || getApiKey();
 
   if (!apiKey) {
     return {

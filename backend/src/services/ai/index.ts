@@ -7,7 +7,7 @@ export type AIProvider = 'deepseek' | 'gemini';
 
 /**
  * Analyze food ingredients using the configured AI provider.
- * Defaults to DeepSeek V4 Flash. Falls back to Gemini if configured.
+ * Supports custom API keys via the customApiKey parameter.
  */
 export async function analyzeIngredients(
   ingredients: string,
@@ -21,11 +21,11 @@ export async function analyzeIngredients(
   const provider = (process.env.AI_PROVIDER || 'deepseek').toLowerCase() as AIProvider;
 
   if (provider === 'deepseek') {
-    const result = await analyzeWithDeepSeek(ingredients, productName);
+    const result = await analyzeWithDeepSeek(ingredients, productName, customApiKey);
     return { ...result, provider: 'deepseek' };
   }
 
-  // Gemini fallback
+  // Gemini fallback — pass custom key if provided
   const result = await analyzeWithGemini(ingredients, productName, customApiKey);
   return { ...result, provider: 'gemini' };
 }

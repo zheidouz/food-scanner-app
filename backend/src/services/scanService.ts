@@ -4,7 +4,7 @@ import { lookupProductCached } from '../services/openFoodFacts';
 import { analyzeIngredients } from '../services/ai';
 import type { FoodAnalysis, ScanResponse } from '../../../shared/types';
 
-export async function handleScan(barcode: string): Promise<ScanResponse> {
+export async function handleScan(barcode: string, customApiKey?: string): Promise<ScanResponse> {
   // 1. Lookup product from Open Food Facts
   const { product, error: lookupError } = await lookupProductCached(barcode);
   if (lookupError || !product) {
@@ -14,7 +14,8 @@ export async function handleScan(barcode: string): Promise<ScanResponse> {
   // 2. Analyze ingredients with AI (DeepSeek V4 Flash by default)
   const { analysis: aiAnalysis, error: aiError, provider } = await analyzeIngredients(
     product.ingredients,
-    product.name
+    product.name,
+    customApiKey
   );
 
   // 3. Compute fallback scores if AI fails

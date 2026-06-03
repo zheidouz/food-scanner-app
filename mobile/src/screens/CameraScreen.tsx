@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -6,15 +6,40 @@ import {
   TouchableOpacity,
   TextInput,
   SafeAreaView,
+  FlatList,
+  Image,
+  Alert,
 } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as Haptics from 'expo-haptics';
+import * as ImagePicker from 'expo-image-picker';
+import { manipulateAsync, SaveFormat } from 'expo-image-manipulator';
 import { theme } from '../theme';
 import { ScanLoading } from '../components/ScanLoading';
 import type { ScanResponse } from '../../../shared/types';
-import { API_BASE_URL, saveScanToHistory, getCachedProduct, cacheProduct } from '../services/api';
+import {
+  API_BASE_URL, saveScanToHistory, getCachedProduct, cacheProduct,
+  getSecureApiKey,
+} from '../services/api';
 
-type ScanMode = 'camera' | 'manual';
+type ScanMode = 'camera' | 'manual' | 'search';
+
+interface SearchResult {
+  barcode: string;
+  name: string;
+  brand: string;
+  imageUrl?: string;
+  nutrition: {
+    calories: number;
+    protein: number;
+    carbohydrates: number;
+    sugars: number;
+    fat: number;
+    saturatedFat: number;
+    fiber: number;
+    sodium: number;
+  };
+}
 
 export function CameraScreen({ navigation }: any) {
   const [permission, requestPermission] = useCameraPermissions();
@@ -24,12 +49,133 @@ export function CameraScreen({ navigation }: any) {
   const [error, setError] = useState<string | null>(null);
   const cameraRef = useRef<any>(null);
 
+  // Search state
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
+  const [searching, setSearching] = useState(false);
+  const searchTimeout = useRef<any>(null);
+
   // Request camera permission on mount
   useEffect(() => {
     if (!permission?.granted) {
       requestPermission();
     }
   }, []);
+
+  // Debounced search
+  const handleSearchInput = useCallback((text: string) => {
+    setSearchQuery(text);
+    if (searchTimeout.current) clearTimeout(searchTimeout.current);
+    if (text.trim().length < 2) {
+      setSearchResults([]);
+      return;
+    }
+    searchTimeout.current = setTimeout(() => performSearch(text.trim()), 400);
+  }, []);
+
+  const performSearch = async (query: string) => {
+    setSearching(true);
+    setError(null);
+    try {
+      const apiKey = await getSecureApiKey();
+      const headers: Record<string, string> = {};
+      if (apiKey) headers['X-DeepSeek-Key'] = apiKey;
+
+      const response = await fetch(`${API_BASE_URL}/search?q=${encodeURIComponent(query)}&page_size=10`, { headers });
+      const data = await response.json();
+      setSearchResults(data.results || []);
+    } catch {
+      setError('Search failed. Check your connection.');
+    } finally {
+      setSearching(false);
+    }
+  };
+
+  const handleSearchSelect = async (item: SearchResult) => {
+    // Scan the selected product via barcode
+    await processBarcode(item.barcode);
+  };
+
+  // Photo upload
+  const handlePhotoUpload = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert(
+        'Photo Access Needed',
+        'We need access to your photo library to scan food labels from photos.',
+        [{ text: 'OK' }]
+      );
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      quality: 0.8,
+      allowsEditing: false,
+    });
+
+    if (result.canceled || !result.assets?.[0]) return;
+
+    const image = result.assets[0];
+
+    // Compress image client-side
+    const compressed = await manipulateAsync(
+      image.uri,
+      [{ resize: { width: 1200 } }],
+      { compress: 0.7, format: SaveFormat.JPEG }
+    );
+
+    setScanning(true);
+    setError(null);
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+
+    try {
+      const formData = new FormData();
+      formData.append('image', {
+        uri: compressed.uri,
+        type: 'image/jpeg',
+        name: 'label.jpg',
+      } as any);
+
+      const apiKey = await getSecureApiKey();
+      const headers: Record<string, string> = {};
+      if (apiKey) headers['X-DeepSeek-Key'] = apiKey;
+
+      const response = await fetch(`${API_BASE_URL}/scan/image`, {
+        method: 'POST',
+        headers,
+        body: formData,
+      });
+      const data: ScanResponse = await response.json();
+
+      if (!data.success || !data.product || !data.analysis) {
+        setError(data.error?.message || 'Could not analyze image.');
+        setScanning(false);
+        return;
+      }
+
+      await saveScanToHistory({
+        id: `photo-${Date.now()}`,
+        timestamp: Date.now(),
+        barcode: 'photo-scan',
+        productName: data.product.name,
+        brand: data.product.brand,
+        healthScore: data.analysis.healthScore,
+        nutriScore: data.analysis.nutriScore,
+        imageUrl: image.uri,
+      });
+
+      navigation.navigate('Result', {
+        product: data.product,
+        analysis: data.analysis,
+        error: data.error?.message,
+      });
+    } catch (err) {
+      setError('Upload failed. Try again.');
+    } finally {
+      setScanning(false);
+    }
+  };
 
   const handleBarcodeScanned = async ({ data }: { data: string }) => {
     if (scanning) return;
@@ -55,7 +201,11 @@ export function CameraScreen({ navigation }: any) {
 
   const processBarcode = async (barcode: string) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/scan/${barcode}`);
+      const apiKey = await getSecureApiKey();
+      const headers: Record<string, string> = {};
+      if (apiKey) headers['X-DeepSeek-Key'] = apiKey;
+
+      const response = await fetch(`${API_BASE_URL}/scan/${barcode}`, { headers });
       const data: ScanResponse = await response.json();
 
       if (!data.success || !data.product || !data.analysis) {
@@ -169,6 +319,7 @@ export function CameraScreen({ navigation }: any) {
 
   return (
     <SafeAreaView style={styles.container}>
+      {/* ===== CAMERA MODE ===== */}
       {mode === 'camera' ? (
         <View style={styles.cameraContainer}>
           <CameraView
@@ -188,14 +339,97 @@ export function CameraScreen({ navigation }: any) {
 
           {scanning && <ScanLoading message="Scanning product..." />}
 
+          {/* Bottom actions row */}
+          <View style={styles.cameraActions}>
+            <TouchableOpacity style={styles.cameraActionBtn} onPress={handlePhotoUpload}>
+              <Text style={styles.cameraActionIcon}>🖼️</Text>
+              <Text style={styles.cameraActionLabel}>Photo</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.cameraActionBtn} onPress={() => setMode('manual')}>
+              <Text style={styles.cameraActionIcon}>⌨️</Text>
+              <Text style={styles.cameraActionLabel}>Barcode</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.cameraActionBtn} onPress={() => setMode('search')}>
+              <Text style={styles.cameraActionIcon}>🔍</Text>
+              <Text style={styles.cameraActionLabel}>Search</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      ) : mode === 'search' ? (
+        /* ===== SEARCH MODE ===== */
+        <View style={styles.manualContainer}>
+          <Text style={styles.title}>Search Products</Text>
+          <Text style={styles.subtitle}>
+            Type a product name to find it in our database.
+          </Text>
+
+          <TextInput
+            style={styles.searchInput}
+            placeholder="e.g. Coca-Cola, oatmeal..."
+            placeholderTextColor={theme.colors.textTertiary}
+            value={searchQuery}
+            onChangeText={handleSearchInput}
+            returnKeyType="search"
+            autoFocus
+          />
+
+          {searching && <ScanLoading message="Searching..." />}
+          {error && <Text style={styles.errorText}>{error}</Text>}
+
+          {searchResults.length > 0 && (
+            <FlatList
+              data={searchResults}
+              keyExtractor={(item) => item.barcode}
+              style={styles.searchResultsList}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={styles.searchResultItem}
+                  onPress={() => handleSearchSelect(item)}
+                >
+                  {item.imageUrl ? (
+                    <Image source={{ uri: item.imageUrl }} style={styles.searchResultImage} />
+                  ) : (
+                    <View style={styles.searchResultImagePlaceholder}>
+                      <Text style={styles.searchResultEmoji}>🍽️</Text>
+                    </View>
+                  )}
+                  <View style={styles.searchResultInfo}>
+                    <Text style={styles.searchResultName} numberOfLines={1}>
+                      {item.name}
+                    </Text>
+                    <Text style={styles.searchResultBrand} numberOfLines={1}>
+                      {item.brand}
+                    </Text>
+                    <Text style={styles.searchResultCals}>
+                      ~{item.nutrition.calories} kcal/100g
+                    </Text>
+                  </View>
+                  <Text style={styles.searchResultArrow}>→</Text>
+                </TouchableOpacity>
+              )}
+            />
+          )}
+
+          {!searching && searchQuery.length >= 2 && searchResults.length === 0 && (
+            <Text style={styles.noResults}>No products found. Try a different search.</Text>
+          )}
+
           <TouchableOpacity
-            style={styles.manualSwitch}
-            onPress={() => setMode('manual')}
+            style={[styles.button, styles.buttonOutline]}
+            onPress={() => {
+              setMode('camera');
+              setError(null);
+              setSearchQuery('');
+              setSearchResults([]);
+            }}
           >
-            <Text style={styles.manualSwitchText}>Enter barcode manually</Text>
+            <Text style={[styles.buttonText, styles.buttonOutlineText]}>
+              Use Camera
+            </Text>
           </TouchableOpacity>
         </View>
       ) : (
+        /* ===== MANUAL BARCODE MODE ===== */
         <View style={styles.manualContainer}>
           <Text style={styles.title}>Enter Barcode</Text>
           <Text style={styles.subtitle}>
@@ -226,18 +460,14 @@ export function CameraScreen({ navigation }: any) {
             <Text style={styles.buttonText}>{scanning ? 'Searching...' : 'Scan Product'}</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity
-            style={[styles.button, styles.buttonOutline]}
-            onPress={() => {
-              setMode('camera');
-              setError(null);
-              setManualBarcode('');
-            }}
-          >
-            <Text style={[styles.buttonText, styles.buttonOutlineText]}>
-              Use Camera
-            </Text>
-          </TouchableOpacity>
+          <View style={styles.manualLinks}>
+            <TouchableOpacity onPress={() => setMode('camera')}>
+              <Text style={styles.linkText}>Use Camera</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => setMode('search')}>
+              <Text style={styles.linkText}>Search Products</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       )}
     </SafeAreaView>
@@ -280,25 +510,115 @@ const styles = StyleSheet.create({
     marginTop: theme.spacing.lg,
     fontWeight: '500',
   },
-  manualSwitch: {
-    position: 'absolute',
-    bottom: 40,
-    alignSelf: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    borderRadius: theme.borderRadius.full,
-  },
-  manualSwitchText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '500',
-  },
+
   manualContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     padding: theme.spacing.lg,
+  },
+  cameraActions: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+  },
+  cameraActionBtn: {
+    alignItems: 'center',
+    padding: 8,
+  },
+  cameraActionIcon: {
+    fontSize: 24,
+    marginBottom: 4,
+  },
+  cameraActionLabel: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  searchInput: {
+    width: '100%',
+    height: 52,
+    borderWidth: 1,
+    borderColor: theme.colors.outline,
+    borderRadius: theme.borderRadius.md,
+    paddingHorizontal: theme.spacing.md,
+    fontSize: 16,
+    color: theme.colors.textPrimary,
+    backgroundColor: theme.colors.surface,
+    marginBottom: theme.spacing.md,
+  },
+  searchResultsList: {
+    width: '100%',
+    flex: 1,
+  },
+  searchResultItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.borderRadius.md,
+    padding: theme.spacing.md,
+    marginBottom: theme.spacing.sm,
+    ...theme.shadows.sm,
+  },
+  searchResultImage: {
+    width: 48,
+    height: 48,
+    borderRadius: theme.borderRadius.sm,
+    marginRight: theme.spacing.md,
+  },
+  searchResultImagePlaceholder: {
+    width: 48,
+    height: 48,
+    borderRadius: theme.borderRadius.sm,
+    backgroundColor: theme.colors.surfaceAlt,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: theme.spacing.md,
+  },
+  searchResultEmoji: {
+    fontSize: 20,
+  },
+  searchResultInfo: {
+    flex: 1,
+  },
+  searchResultName: {
+    ...theme.typography.body,
+    fontWeight: '600',
+    color: theme.colors.textPrimary,
+  },
+  searchResultBrand: {
+    ...theme.typography.bodySmall,
+    color: theme.colors.textSecondary,
+    marginTop: 2,
+  },
+  searchResultCals: {
+    ...theme.typography.label,
+    color: theme.colors.textTertiary,
+    marginTop: 2,
+  },
+  searchResultArrow: {
+    fontSize: 20,
+    color: theme.colors.textTertiary,
+    marginLeft: theme.spacing.sm,
+  },
+  noResults: {
+    ...theme.typography.body,
+    color: theme.colors.textSecondary,
+    textAlign: 'center',
+    marginTop: theme.spacing.lg,
+  },
+  manualLinks: {
+    flexDirection: 'row',
+    gap: theme.spacing.lg,
+    marginTop: theme.spacing.lg,
+  },
+  linkText: {
+    ...theme.typography.body,
+    color: theme.colors.primary,
+    fontWeight: '600',
   },
   title: {
     ...theme.typography.h1,

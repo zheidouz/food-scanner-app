@@ -1,4 +1,4 @@
-import type { FoodProduct, NutritionInfo, ScanError } from '@shared/types';
+import type { FoodProduct, NutritionInfo, ScanError } from '../../../shared/types';
 
 const OFF_API_BASE = process.env.OPEN_FOOD_FACTS_API_URL || 'https://world.openfoodfacts.org';
 

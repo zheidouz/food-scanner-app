@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { theme } from '../theme';
-import type { NutriScore } from '@shared/types';
+import type { NutriScore } from '../../../shared/types';
 
 interface Props {
   score: NutriScore;

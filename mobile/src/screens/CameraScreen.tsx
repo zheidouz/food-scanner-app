@@ -5,15 +5,14 @@ import {
   StyleSheet,
   TouchableOpacity,
   TextInput,
-  Alert,
   ActivityIndicator,
   SafeAreaView,
 } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as Haptics from 'expo-haptics';
 import { theme } from '../theme';
-import type { ScanResponse } from '@shared/types';
-import { API_BASE_URL } from '../services/api';
+import type { ScanResponse } from '../../../shared/types';
+import { API_BASE_URL, saveScanToHistory } from '../services/api';
 
 type ScanMode = 'camera' | 'manual';
 
@@ -65,10 +64,23 @@ export function CameraScreen({ navigation }: any) {
         return;
       }
 
+      // Save to scan history
+      await saveScanToHistory({
+        id: `${barcode}-${Date.now()}`,
+        timestamp: Date.now(),
+        barcode,
+        productName: data.product.name,
+        brand: data.product.brand,
+        healthScore: data.analysis.healthScore,
+        nutriScore: data.analysis.nutriScore,
+        imageUrl: data.product.imageUrl,
+      });
+
       // Navigate to result screen
       navigation.navigate('Result', {
         product: data.product,
         analysis: data.analysis,
+        error: data.error?.message,
       });
     } catch (err) {
       setError('Network error. Please try again.');

@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { theme } from '../theme';
-import type { GoodPoint, BadPoint } from '@shared/types';
+import type { GoodPoint, BadPoint } from '../../../shared/types';
 
 type CardType = 'good' | 'bad';
 

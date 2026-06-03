@@ -1,4 +1,4 @@
-import type { NovaGroup, NutriScore, NutritionInfo, GoodPoint, BadPoint } from '@shared/types';
+import type { NovaGroup, NutriScore, NutritionInfo, GoodPoint, BadPoint } from '../../../shared/types';
 
 /**
  * Calculate Nutri-Score (A-E) based on Open Food Facts algorithm

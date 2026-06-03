@@ -1,8 +1,8 @@
-import type { NovaGroup, NutriScore } from '@shared/types';
+import type { NovaGroup, NutriScore } from '../../../shared/types';
 import { calculateNutriScore, calculateNovaFromNutrition, calculateHealthScore, generateNutritionFlags } from '../services/scoring';
 import { lookupProductCached } from '../services/openFoodFacts';
 import { analyzeIngredients } from '../services/gemini';
-import type { FoodAnalysis, ScanResponse } from '@shared/types';
+import type { FoodAnalysis, ScanResponse } from '../../../shared/types';
 
 export async function handleScan(barcode: string): Promise<ScanResponse> {
   // 1. Lookup product from Open Food Facts

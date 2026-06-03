@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { theme } from '../theme';
-import type { NovaGroup } from '@shared/types';
+import type { NovaGroup } from '../../../shared/types';
 
 interface Props {
   group: NovaGroup;

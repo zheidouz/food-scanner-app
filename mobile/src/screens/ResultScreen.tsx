@@ -6,7 +6,7 @@ import { NutriScoreBadge } from '../components/NutriScoreBadge';
 import { NovaBadge } from '../components/NovaBadge';
 import { GoodBadCard } from '../components/GoodBadCard';
 import { ErrorState } from '../components/ErrorState';
-import type { FoodProduct, FoodAnalysis } from '@shared/types';
+import type { FoodProduct, FoodAnalysis } from '../../../shared/types';
 
 interface Props {
   route: {

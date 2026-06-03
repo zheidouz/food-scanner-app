@@ -8,7 +8,7 @@ import { CameraScreen } from './src/screens/CameraScreen';
 import { ResultScreen } from './src/screens/ResultScreen';
 import { HistoryScreen } from './src/screens/HistoryScreen';
 import { ProfileScreen } from './src/screens/ProfileScreen';
-import { theme } from './src/theme';
+import { theme } from './src/theme/index';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();

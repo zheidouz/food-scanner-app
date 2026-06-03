@@ -1,9 +1,12 @@
 import { aiResponseSchema, buildAnalysisPrompt, extractJson, type ValidatedAIResponse } from './schema';
 import type { ScanError } from '../../../../shared/types';
 
-const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY || '';
 const DEEPSEEK_API_URL = 'https://api.deepseek.com/v1/chat/completions';
-const MODEL = 'deepseek-chat'; // DeepSeek V4 Flash
+const MODEL = 'deepseek-v4-flash'; // DeepSeek V4 Flash
+
+function getApiKey(): string {
+  return process.env.DEEPSEEK_API_KEY || '';
+}
 
 /**
  * Analyze ingredients using DeepSeek V4 Flash (OpenAI-compatible API)
@@ -15,7 +18,9 @@ export async function analyzeWithDeepSeek(
   analysis: ValidatedAIResponse | null;
   error: ScanError | null;
 }> {
-  if (!DEEPSEEK_API_KEY) {
+  const apiKey = getApiKey();
+
+  if (!apiKey) {
     return {
       analysis: null,
       error: {
@@ -32,7 +37,7 @@ export async function analyzeWithDeepSeek(
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${DEEPSEEK_API_KEY}`,
+        'Authorization': `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
         model: MODEL,

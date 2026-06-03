@@ -1,8 +1,11 @@
 import { aiResponseSchema, buildAnalysisPrompt, extractJson, type ValidatedAIResponse } from './schema';
 import type { ScanError } from '../../../../shared/types';
 
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY || '';
 const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
+
+function getGeminiKey(): string {
+  return process.env.GEMINI_API_KEY || '';
+}
 
 /**
  * Analyze ingredients using Google Gemini (fallback provider)
@@ -15,7 +18,7 @@ export async function analyzeWithGemini(
   analysis: ValidatedAIResponse | null;
   error: ScanError | null;
 }> {
-  const apiKey = customApiKey || GEMINI_API_KEY;
+  const apiKey = customApiKey || getGeminiKey();
 
   if (!apiKey) {
     return {

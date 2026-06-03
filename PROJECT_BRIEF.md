@@ -88,17 +88,19 @@ A mobile app that scans food products (via camera, barcode, photo upload, or tex
 ## 7. ✅ Current Sprint
 
 **Sprint 1** — Project scaffolding, core scanning, and basic analysis
-**Status:** ✅ Complete — see `docs/sprint-1/done.md`
+**Status:** ✅ **Complete** — all 21 tasks delivered (see `docs/sprint-1/done.md`)
 
 **Delivered:**
 - Expo + TypeScript mobile app with camera, barcode scanning, manual entry
 - Backend API (Express + TypeScript) with Open Food Facts integration
-- Google Gemini analysis with zod schema validation
+- DeepSeek V4 Flash AI analysis with zod schema validation
 - Nutri-Score, NOVA, and Health Score (0-100) calculations
 - Scan Result screen with Good/Bad cards, nutrition table, allergens, additives
-- Scan history (AsyncStorage) with History screen
-- Error state components (4 variants)
-- Rate limiter middleware, haptic feedback, 12 unit tests
+- Scan history (AsyncStorage), offline product cache (7-day TTL)
+- Loading animation (ScanLoading — spinning food emojis), haptic feedback
+- Error state components (4 variants), rate limiter (60 req/min)
+- 12 unit tests passing, TypeScript clean on both projects
+- QA sign-off: ✅ PASS (5 bugs found, fixed, verified)
 
 **Next: Sprint 2** — See `docs/sprint-2/plan.md`
 

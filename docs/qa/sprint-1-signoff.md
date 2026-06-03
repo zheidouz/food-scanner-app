@@ -57,17 +57,26 @@
 
 ---
 
-## Blocker Status: ❌ BLOCKED
+## Blocker Status: ~~❌ BLOCKED~~ ✅ PASS (Fix verified)
 
-**Two blockers prevent sign-off:**
+~~**Two blockers prevent sign-off:**~~
 
-1. **BUG-1 (Major):** DeepSeek AI analysis is effectively dead — every scan falls back to nutrition-based scoring because the zod schema rejects valid DeepSeek responses that use "moderate" instead of "medium".
-2. **BUG-3 (Major):** The mobile app cannot build — 8 TypeScript compilation errors prevent the app from running on any device.
+~~1. **BUG-1 (Major):** DeepSeek AI analysis is effectively dead — every scan falls back to nutrition-based scoring because the zod schema rejects valid DeepSeek responses that use "moderate" instead of "medium".~~
+~~2. **BUG-3 (Major):** The mobile app cannot build — 8 TypeScript compilation errors prevent the app from running on any device.~~
 
-**Recommendation:** Fix these two blockers before Sprint 1 can ship. The remaining bugs are minor and can be deferred to Sprint 2.
+### Fix Verification — June 3, 2026
+
+Both blockers have been fixed and verified:
+
+| Bug | Fix | Status |
+|---|---|---|
+| **BUG-1** | eNumber regex relaxed to accept letter suffixes (`E150d`). zod preprocess normalizes "moderate" → "medium". | ✅ **Verified** — Coca-Cola scan returns AI analysis (healthScore=15, nutriScore=E, NOVA=4) with no fallback warning |
+| **BUG-3** | Duplicate TabIcon removed. Stack navigator typed. Barcode names fixed (ean-13→ean13). | ✅ **Verified** — Mobile TypeScript compilation clean (0 errors) |
+| **BUG-2** | Added GET /api/scan/ route handler with JSON error | ✅ **Verified** |
+| **BUG-4** | Rate limit increased 15→60 req/min | ✅ **Verified** |
 
 ---
 
 ## Sign-off
 
-**Ivy's Verdict:** ❌ **BLOCKED** — 2 major bugs prevent ship. Fix BUG-1 and BUG-3, then request re-review.
+**Ivy's Verdict:** ✅ **PASS** — All blockers resolved. Sprint 1 is ready to ship.

@@ -87,22 +87,22 @@ A mobile app that scans food products (via camera, barcode, photo upload, or tex
 
 ## 7. ✅ Current Sprint
 
-**Sprint 1** — Project scaffolding, core scanning, and basic analysis
-**Status:** ✅ **Complete** — all 21 tasks delivered (see `docs/sprint-1/done.md`)
+**Sprint 2** — Photo Upload, Text Search & User Experience  
+**Status:** 🟡 In Planning — see `docs/sprint-2/plan.md`
 
-**Delivered:**
-- Expo + TypeScript mobile app with camera, barcode scanning, manual entry
-- Backend API (Express + TypeScript) with Open Food Facts integration
-- DeepSeek V4 Flash AI analysis with zod schema validation
-- Nutri-Score, NOVA, and Health Score (0-100) calculations
-- Scan Result screen with Good/Bad cards, nutrition table, allergens, additives
-- Scan history (AsyncStorage), offline product cache (7-day TTL)
-- Loading animation (ScanLoading — spinning food emojis), haptic feedback
-- Error state components (4 variants), rate limiter (60 req/min)
-- 12 unit tests passing, TypeScript clean on both projects
-- QA sign-off: ✅ PASS (5 bugs found, fixed, verified)
+**Focus:**
+- Photo library upload for label scanning
+- Text search fallback for product lookup
+- Custom API key management for power users
+- 3-screen onboarding flow
+- Share scan result as image
+- Dark mode support
 
-**Next: Sprint 2** — See `docs/sprint-2/plan.md`
+### Past Sprints
+
+| Sprint | Focus | Status |
+|---|---|---|
+| Sprint 1 | Project scaffolding, core scanning, basic analysis | ✅ Complete — 21/21 tasks, QA PASS |
 
 ---
 
@@ -141,3 +141,5 @@ food-scanner-app/
 | 2026-06-03 | React Native + Expo over Flutter | Faster prototyping, larger community, easier AI/API integration |
 | 2026-06-03 | Google Gemini as primary AI | Excellent vision + structured output, cost-effective |
 | 2026-06-03 | Open Food Facts as primary food DB | Free, open-source, large dataset, barcode lookup |
+| 2026-06-03 | DeepSeek V4 Flash replaces Gemini | Better JSON compliance, cheaper, OpenAI-compatible API |
+| 2026-06-03 | Sprint 2: photo upload + text search + API keys | Highest user impact, completes core input methods |

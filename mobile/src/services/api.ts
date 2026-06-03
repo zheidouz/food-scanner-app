@@ -1,4 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as SecureStore from 'expo-secure-store';
 import type { FoodProduct, FoodAnalysis } from '../../../shared/types';
 
 // Change this to your backend URL
@@ -149,4 +150,55 @@ export async function clearProductCache(): Promise<void> {
   } catch (err) {
     console.error('Failed to clear product cache:', err);
   }
+}
+
+// ========================================
+// Secure API Key Storage
+// ========================================
+
+const SECURE_API_KEY_KEY = 'deepseek_api_key';
+
+/**
+ * Save DeepSeek API key to secure storage
+ */
+export async function setSecureApiKey(key: string): Promise<void> {
+  try {
+    if (key.trim()) {
+      await SecureStore.setItemAsync(SECURE_API_KEY_KEY, key.trim());
+    } else {
+      await SecureStore.deleteItemAsync(SECURE_API_KEY_KEY);
+    }
+  } catch (err) {
+    // Fallback to AsyncStorage if SecureStore unavailable
+    console.warn('SecureStore unavailable, falling back to AsyncStorage:', err);
+    if (key.trim()) {
+      await AsyncStorage.setItem(SECURE_API_KEY_KEY, key.trim());
+    } else {
+      await AsyncStorage.removeItem(SECURE_API_KEY_KEY);
+    }
+  }
+}
+
+/**
+ * Get DeepSeek API key from secure storage
+ */
+export async function getSecureApiKey(): Promise<string | null> {
+  try {
+    return await SecureStore.getItemAsync(SECURE_API_KEY_KEY);
+  } catch {
+    // Fallback to AsyncStorage
+    try {
+      return await AsyncStorage.getItem(SECURE_API_KEY_KEY);
+    } catch {
+      return null;
+    }
+  }
+}
+
+/**
+ * Check if a custom API key is stored
+ */
+export async function hasSecureApiKey(): Promise<boolean> {
+  const key = await getSecureApiKey();
+  return key !== null && key.length > 0;
 }

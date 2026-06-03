@@ -18,7 +18,8 @@ scanRouter.post('/', async (req, res) => {
   }
 
   const sanitizedBarcode = barcode.trim();
-  const result = await handleScan(sanitizedBarcode);
+  const customApiKey = req.headers['x-deepseek-key'] as string | undefined;
+  const result = await handleScan(sanitizedBarcode, customApiKey);
 
   if (!result.success) {
     return res.status(result.error?.code === 'RATE_LIMITED' ? 429 : 404).json(result);
@@ -52,7 +53,8 @@ scanRouter.get('/:barcode', async (req, res) => {
     });
   }
 
-  const result = await handleScan(barcode.trim());
+  const customApiKey = req.headers['x-deepseek-key'] as string | undefined;
+  const result = await handleScan(barcode.trim(), customApiKey);
 
   if (!result.success) {
     return res.status(result.error?.code === 'RATE_LIMITED' ? 429 : 404).json(result);

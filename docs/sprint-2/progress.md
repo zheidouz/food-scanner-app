@@ -4,14 +4,14 @@
 
 ---
 
-## Overall Status: 🟡 In Planning
+## Overall Status: 🟡 In Progress
 
 | Metric | Value |
 |---|---|
 | Total Tasks | 9 (7 P0 + 2 P1) |
-| Completed | 0 |
+| Completed | 7 |
 | In Progress | 0 |
-| Not Started | 9 |
+| Not Started | 2 |
 | Blocked | 0 |
 
 ---
@@ -20,12 +20,17 @@
 
 ### June 3, 2026 — Team Consilium Held
 - Full team debate on Sprint 2 plan
-- **Cut (→ Sprint 3):** Dark mode, 3-screen onboarding, Tesseract.js OCR, multi-scan, alternatives
-- **Promoted (→ P0):** Search result list screen (coupled with text search)
-- **Added (→ P1):** Separate rate limiter for image endpoint
-- **Technology changes:** expo-secure-store (not AsyncStorage) for API keys; X-DeepSeek-Key header; client-side image compression
-- See `docs/brainstorm/02-sprint2-consilium.md` for full debate
+- See `docs/brainstorm/02-sprint2-consilium.md`
 
-### June 3, 2026 — Sprint 2 Planned
-- 7 P0 + 2 P1 tasks, 5 deferred to Sprint 3
-- Focus: photo upload, text search, custom API keys, share, rate limiting
+### June 3, 2026 — Phase 1 Complete (7 P0 tasks)
+- ✅ S2-01: Photo library upload with expo-image-picker + compression
+- ✅ S2-02: Backend image analysis endpoint (POST /api/scan/image, multer)
+- ✅ S2-03: Text search input on CameraScreen (debounced)
+- ✅ S2-04: Backend text search endpoint (GET /api/search?q=, OFF proxy)
+- ✅ S2-05: Search result list screen (FlatList, tap to analyze)
+- ✅ S2-06: Custom API key management (expo-secure-store, hidden dev mode)
+- ✅ S2-07: Backend X-DeepSeek-Key header support
+
+**Remaining (P1):**
+- ⏳ S2-08: Share scan result as image (ViewShot + Share)
+- ⏳ S2-09: Separate rate limiter for image endpoint (10 req/min)

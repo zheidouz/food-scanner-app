@@ -17,6 +17,7 @@ type RootStackParamList = {
     product: FoodProduct;
     analysis: FoodAnalysis;
     error?: string;
+    cached?: boolean;
   };
 };
 

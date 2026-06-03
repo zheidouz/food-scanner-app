@@ -15,13 +15,24 @@ type RootStackParamList = {
     product: FoodProduct;
     analysis: FoodAnalysis;
     error?: string;
+    cached?: boolean;
   };
 };
 
-type Props = NativeStackScreenProps<RootStackParamList, 'Result'>;
+interface Props {
+  route: {
+    params: {
+      product: FoodProduct;
+      analysis: FoodAnalysis;
+      error?: string;
+      cached?: boolean;
+    };
+  };
+  navigation: any;
+}
 
 export function ResultScreen({ route, navigation }: Props) {
-  const { product, analysis, error } = route.params;
+  const { product, analysis, error, cached } = route.params;
 
   if (!product || !analysis) {
     return (
@@ -64,6 +75,13 @@ export function ResultScreen({ route, navigation }: Props) {
             <NovaBadge group={analysis.novaGroup} label={novaLabels[analysis.novaGroup]} />
           </View>
         </View>
+
+        {/* Cached indicator */}
+        {cached && (
+          <View style={styles.cachedBanner}>
+            <Text style={styles.cachedText}>📡 Offline — Cached data</Text>
+          </View>
+        )}
 
         {/* Warning if AI analysis was partial */}
         {error && (
@@ -251,6 +269,19 @@ const styles = StyleSheet.create({
     marginHorizontal: theme.spacing.md,
     borderRadius: theme.borderRadius.sm,
     marginBottom: theme.spacing.md,
+  },
+  cachedBanner: {
+    backgroundColor: '#E8F5E9',
+    padding: theme.spacing.sm,
+    marginHorizontal: theme.spacing.md,
+    borderRadius: theme.borderRadius.sm,
+    marginBottom: theme.spacing.md,
+    alignItems: 'center',
+  },
+  cachedText: {
+    color: '#2E7D32',
+    fontSize: 13,
+    fontWeight: '600',
   },
   warningText: {
     color: '#E65100',

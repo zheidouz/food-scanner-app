@@ -5,14 +5,14 @@ import {
   StyleSheet,
   TouchableOpacity,
   TextInput,
-  ActivityIndicator,
   SafeAreaView,
 } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as Haptics from 'expo-haptics';
 import { theme } from '../theme';
+import { ScanLoading } from '../components/ScanLoading';
 import type { ScanResponse } from '../../../shared/types';
-import { API_BASE_URL, saveScanToHistory } from '../services/api';
+import { API_BASE_URL, saveScanToHistory, getCachedProduct, cacheProduct } from '../services/api';
 
 type ScanMode = 'camera' | 'manual';
 
@@ -59,10 +59,33 @@ export function CameraScreen({ navigation }: any) {
       const data: ScanResponse = await response.json();
 
       if (!data.success || !data.product || !data.analysis) {
+        // Try offline cache before giving up
+        const cached = await getCachedProduct(barcode);
+        if (cached) {
+          await saveScanToHistory({
+            id: `${barcode}-${Date.now()}`,
+            timestamp: Date.now(),
+            barcode,
+            productName: cached.product.name,
+            brand: cached.product.brand,
+            healthScore: cached.analysis.healthScore,
+            nutriScore: cached.analysis.nutriScore,
+            imageUrl: cached.product.imageUrl,
+          });
+          navigation.navigate('Result', {
+            product: cached.product,
+            analysis: cached.analysis,
+            cached: true,
+          });
+          return;
+        }
         setError(data.error?.message || 'Could not find product.');
         setScanning(false);
         return;
       }
+
+      // Cache the result for offline use
+      await cacheProduct(barcode, data.product, data.analysis);
 
       // Save to scan history
       await saveScanToHistory({
@@ -83,7 +106,27 @@ export function CameraScreen({ navigation }: any) {
         error: data.error?.message,
       });
     } catch (err) {
-      setError('Network error. Please try again.');
+      // Network error — try offline cache
+      const cached = await getCachedProduct(barcode);
+      if (cached) {
+        await saveScanToHistory({
+          id: `${barcode}-${Date.now()}`,
+          timestamp: Date.now(),
+          barcode,
+          productName: cached.product.name,
+          brand: cached.product.brand,
+          healthScore: cached.analysis.healthScore,
+          nutriScore: cached.analysis.nutriScore,
+          imageUrl: cached.product.imageUrl,
+        });
+        navigation.navigate('Result', {
+          product: cached.product,
+          analysis: cached.analysis,
+          cached: true,
+        });
+        return;
+      }
+      setError('Network error. Offline data not available for this product.');
     } finally {
       setScanning(false);
     }
@@ -94,7 +137,7 @@ export function CameraScreen({ navigation }: any) {
       <SafeAreaView style={styles.container}>
         <View style={styles.centerContent}>
           <Text style={styles.title}>Food Scanner</Text>
-          <ActivityIndicator size="large" color={theme.colors.primary} />
+          <Text style={styles.loadingText}>Loading camera...</Text>
         </View>
       </SafeAreaView>
     );
@@ -143,12 +186,7 @@ export function CameraScreen({ navigation }: any) {
             </View>
           </CameraView>
 
-          {scanning && (
-            <View style={styles.scanningOverlay}>
-              <ActivityIndicator size="large" color={theme.colors.primary} />
-              <Text style={styles.scanningText}>Analyzing...</Text>
-            </View>
-          )}
+          {scanning && <ScanLoading message="Scanning product..." />}
 
           <TouchableOpacity
             style={styles.manualSwitch}
@@ -176,6 +214,8 @@ export function CameraScreen({ navigation }: any) {
             maxLength={13}
           />
 
+          {scanning && <ScanLoading message="Searching barcode..." />}
+
           {error && <Text style={styles.errorText}>{error}</Text>}
 
           <TouchableOpacity
@@ -183,11 +223,7 @@ export function CameraScreen({ navigation }: any) {
             onPress={handleManualSubmit}
             disabled={scanning}
           >
-            {scanning ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
-              <Text style={styles.buttonText}>Scan Product</Text>
-            )}
+            <Text style={styles.buttonText}>{scanning ? 'Searching...' : 'Scan Product'}</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -244,18 +280,6 @@ const styles = StyleSheet.create({
     marginTop: theme.spacing.lg,
     fontWeight: '500',
   },
-  scanningOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  scanningText: {
-    color: '#fff',
-    fontSize: 18,
-    marginTop: theme.spacing.md,
-    fontWeight: '600',
-  },
   manualSwitch: {
     position: 'absolute',
     bottom: 40,
@@ -280,6 +304,11 @@ const styles = StyleSheet.create({
     ...theme.typography.h1,
     color: theme.colors.textPrimary,
     marginBottom: theme.spacing.sm,
+  },
+  loadingText: {
+    ...theme.typography.body,
+    color: theme.colors.textSecondary,
+    marginTop: theme.spacing.md,
   },
   subtitle: {
     ...theme.typography.body,

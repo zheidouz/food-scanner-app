@@ -410,6 +410,9 @@ export function CameraScreen({ navigation }: any) {
             />
           )}
 
+          {searchQuery.length > 0 && searchQuery.length < 2 && (
+            <Text style={styles.hintText}>Type at least 2 characters to search.</Text>
+          )}
           {!searching && searchQuery.length >= 2 && searchResults.length === 0 && (
             <Text style={styles.noResults}>No products found. Try a different search.</Text>
           )}
@@ -609,6 +612,12 @@ const styles = StyleSheet.create({
     color: theme.colors.textSecondary,
     textAlign: 'center',
     marginTop: theme.spacing.lg,
+  },
+  hintText: {
+    ...theme.typography.bodySmall,
+    color: theme.colors.textTertiary,
+    textAlign: 'center',
+    marginTop: theme.spacing.md,
   },
   manualLinks: {
     flexDirection: 'row',

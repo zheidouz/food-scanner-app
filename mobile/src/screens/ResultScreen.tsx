@@ -201,6 +201,9 @@ export function ResultScreen({ route, navigation }: Props) {
         </ViewShot>
 
         {/* Share + Actions */}
+        {product.nutrition.calories > 0 && (
+          <View style={{ height: 1, backgroundColor: theme.colors.outlineLight, marginHorizontal: theme.spacing.md }} />
+        )}
         <TouchableOpacity style={styles.shareButton} onPress={handleShare}>
           <Text style={styles.shareButtonText}>📤 Share Result</Text>
         </TouchableOpacity>

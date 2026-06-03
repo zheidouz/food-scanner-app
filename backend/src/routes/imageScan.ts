@@ -28,8 +28,17 @@ imageScanRouter.post('/', upload.single('image'), async (req, res) => {
     const { labelText } = req.body;
 
     // If user provided label text (typed from the photo), use it
-    // Otherwise, we'll analyze what we can (no OCR yet — Sprint 3)
-    const ingredients = labelText?.trim() || 'Photo uploaded — no text extracted yet. OCR coming in Sprint 3.';
+    // Without OCR, we need the user to type ingredients manually
+    if (!labelText?.trim()) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: 'ANALYSIS_FAILED',
+          message: 'No text provided. Please type the ingredients visible on the label. OCR is coming in a future update.',
+        },
+      });
+    }
+    const ingredients = labelText.trim();
 
     // Get custom API key from header if provided
     const customApiKey = req.headers['x-deepseek-key'] as string | undefined;

@@ -73,7 +73,9 @@ searchRouter.get('/', async (req, res) => {
       };
     });
 
-    return res.json({ success: true, results, total: data.count || results.length });
+    // Return results without the total count to avoid confusion
+    // (pagination not yet implemented — see BUG-9)
+    return res.json({ success: true, results });
   } catch (err) {
     return res.status(500).json({
       success: false,

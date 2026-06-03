@@ -15,3 +15,18 @@ export const rateLimiter = rateLimit({
     },
   },
 });
+
+// Stricter limit for image uploads (heavier processing)
+export const imageRateLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    success: false,
+    error: {
+      code: 'RATE_LIMITED',
+      message: 'Too many image uploads. Please wait before uploading another photo.',
+    },
+  },
+});

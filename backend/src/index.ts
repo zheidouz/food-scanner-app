@@ -4,7 +4,7 @@ import cors from 'cors';
 import { scanRouter } from './routes/scan';
 import { imageScanRouter } from './routes/imageScan';
 import { searchRouter } from './routes/search';
-import { rateLimiter } from './middleware/rateLimiter';
+import { rateLimiter, imageRateLimiter } from './middleware/rateLimiter';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -16,7 +16,7 @@ app.use('/api/', rateLimiter);
 
 // Routes
 app.use('/api/scan', scanRouter);
-app.use('/api/scan/image', imageScanRouter);
+app.use('/api/scan/image', imageRateLimiter, imageScanRouter);
 app.use('/api/search', searchRouter);
 
 // Health check
